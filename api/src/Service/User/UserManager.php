@@ -1,43 +1,49 @@
 <?php
-declare(strict_types=1);
 
-namespace App\Repository;
 
+namespace App\Service\User;
+
+use App\Entity\User;
+use App\Exception\User\UserNotFoundException;
 use Doctrine\DBAL\Connection;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\Persistence\Mapping\MappingException;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Persistence\ObjectManager;
-use Doctrine\Persistence\ObjectRepository;
-use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * Class BaseRepository
- * @package App\Repository
- */
-abstract class BaseRepository
+class UserManager
 {
-    private ManagerRegistry $managerRegistry;
     protected Connection $connection;
-    protected ObjectRepository $objectRepository;
+    protected EntityManagerInterface $entityManager;
 
-    public function __construct(ManagerRegistry $managerRegistry, Connection $connection)
-    {
-        $this->managerRegistry = $managerRegistry;
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        Connection $connection
+    ){
+        $this->entityManager = $entityManager;
         $this->connection = $connection;
-        $this->objectRepository = $this->getEntityManager()->getRepository($this->entityClass());
+        $this->repository = $entityManager->getRepository(User::class);
     }
-
-    abstract protected static function entityClass(): string;
 
     /**
      * @throws ORMException
      */
     public function persistEntity(object $entity): void
     {
-        $this->getEntityManager()->persist($entity);
+        $this->entityManager->persist($entity);
+    }
+
+    /**
+     * @param string $email
+     * @return User
+     */
+    public function findOneByEmailOrFail(string $email): User
+    {
+        if (null === $user = $this->repository->findOneBy(['email' => $email])) {
+            throw UserNotFoundException::fromEmail($email);
+        }
+
+        return $user;
     }
 
     /**
@@ -47,8 +53,8 @@ abstract class BaseRepository
      */
     public function flushData(): void
     {
-        $this->getEntityManager()->flush();
-        $this->getEntityManager()->clear();
+        $this->entityManager->flush();
+        $this->entityManager->clear();
     }
 
     /**
@@ -57,8 +63,10 @@ abstract class BaseRepository
      */
     public function saveEntity(object $entity)
     {
-        $this->getEntityManager()->persist($entity);
-        $this->getEntityManager()->flush();
+        $this->entityManager->persist($entity);
+        $this->entityManager->flush();
+
+        return $entity;
     }
 
     /**
@@ -67,8 +75,8 @@ abstract class BaseRepository
      */
     public function removeEntity(object $entity)
     {
-        $this->getEntityManager()->remove($entity);
-        $this->getEntityManager()->flush();
+        $this->entityManager->remove($entity);
+        $this->entityManager->flush();
     }
 
 
@@ -93,19 +101,5 @@ abstract class BaseRepository
     protected function executeQuery(string $query, array $params = [])
     {
         return $this->connection->executeQuery($query, $params);
-    }
-
-    /**
-     * @return ObjectManager|EntityManager
-     */
-    private function getEntityManager()
-    {
-        $entityManager = $this->managerRegistry->getManager();
-
-        if ($entityManager->isOpen()) {
-            return $entityManager;
-        }
-
-        return $this->managerRegistry->resetManager();
     }
 }

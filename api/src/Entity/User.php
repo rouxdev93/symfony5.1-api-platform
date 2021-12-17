@@ -10,12 +10,11 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Index;
-
 /**
  * Class User
  *
- * @ORM\Entity(repositoryClass=UserRepository::class)
- * @ORM\Table(name="user",indexes={
+ * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @ORM\Table(name="user", indexes={
  *     @Index(name="IDX_user_email", columns={"email"})
  * })
  * @UniqueEntity(fields="email", message="This e-mail is already used.")
@@ -27,8 +26,7 @@ class User implements UserInterface
 {
     /**
      * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length=100)
      */
     private string $id;
 

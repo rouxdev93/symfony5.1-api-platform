@@ -1,54 +1,110 @@
-#!/bin/bash
+#!make
+include .env_docker
+export $(shell sed 's/=.*//' .env_docker)
 
-DOCKER_BE = symfony-api-platform-be
-OS := $(shell uname)
+# Provides a bash in PHP container (user www-data)
+bash-php: up
+	docker-compose exec -u www-data php bash
 
-ifeq ($(OS),Darwin)
-	UID = $(shell id -u)
-else ifeq ($(OS),Linux)
-	UID = $(shell id -u)
-else
-	UID = 1000
-endif
+# Provides a bash in PHP container (user root)
+bash-php-root: up
+	docker-compose exec php bash
 
-help: ## Show this help message
-	@echo 'usage: make [target]'
-	@echo
-	@echo 'targets:'
-	@egrep '^(.+)\:\ ##\ (.+)' ${MAKEFILE_LIST} | column -t -c 2 -s ':#'
+install-symfony: build
+	# Create skeleton using last version available
+	docker-compose exec -u www-data php composer create-project symfony/website-skeleton ${RELATIVE_APP_PATH}/tmp
 
-run: ## Start the containers
-	docker network create symfony-api-platform-network || true
-	U_ID=${UID} docker-compose up -d
+	# append SF .env file to stack .env
+	cat "${RELATIVE_APP_PATH}/tmp/.env_docker" >> .env
 
-stop: ## Stop the containers
-	U_ID=${UID} docker-compose stop
+	# append SF .env file to stack .env
+	cat "${RELATIVE_APP_PATH}/tmp/.gitignore" >> .gitignore
 
-restart: ## Restart the containers
-	$(MAKE) stop && $(MAKE) run
+	# remove tmp/.env and /tmp/.gitignore file now its content is appended
+	rm ${RELATIVE_APP_PATH}/tmp/.env ${RELATIVE_APP_PATH}/tmp/.gitignore
 
-build: ## Rebuilds all the containers
-	U_ID=${UID} docker-compose build
+	# remove vendor folder as it will be replaced by Symfony one
+	rm -rf vendor
 
-prepare: ## Runs backend commands
-	$(MAKE) composer-install
+	# move all app up
+	mv ${RELATIVE_APP_PATH}/tmp/* ${RELATIVE_APP_PATH}
+	mv ${RELATIVE_APP_PATH}/tmp/.env.test ${RELATIVE_APP_PATH}
 
-# Backend commands
-composer-install: ## Installs composer dependencies
-	U_ID=${UID} docker exec --user ${UID} -it ${DOCKER_BE} composer install --no-scripts --no-interaction --optimize-autoloader
+	# rm tmp folder
+	rm -r ${RELATIVE_APP_PATH}/tmp
 
-migrations: ## Runs the migrations
-	U_ID=${UID} docker exec -it --user ${UID} ${DOCKER_BE} bin/console doctrine:migrations:migrate -n
+	# Install migrations
+	docker-compose exec -u www-data php composer require doctrine/doctrine-migrations-bundle
 
-be-logs: ## Tails the Symfony dev log
-	U_ID=${UID} docker exec -it --user ${UID} ${DOCKER_BE} tail -f var/log/dev.log
-# End backend commands
+	# Install dev helpers maker
+	docker-compose exec -u www-data php composer require symfony/maker-bundle --dev
+	docker-compose exec -u www-data php composer require phpstan/phpstan --dev
 
-ssh-be: ## ssh's into the be container
-	U_ID=${UID} docker exec -it --user ${UID} ${DOCKER_BE} bash
+# Build app
+install-app: build composer-install migrate
 
-code-style: ## Runs php-cs to fix code styling following Symfony rules
-	U_ID=${UID} docker exec -it --user ${UID} ${DOCKER_BE} php-cs-fixer fix src --rules=@Symfony
+	# Configure Yarn storage
+	docker-compose exec -u www-data php yarn config set global-folder ${YARN_GLOBAL_FOLDER}
+	docker-compose exec -u www-data php yarn config set cache-folder ${YARN_CACHE_FOLDER}
 
-generate-ssh-keys: # Generates SSH keys for the JWT library #
-  U_ID=${UID} docker exec -it --user ${UID} ${DOCKER_BE} lexik:jwt:generate-keypair
+	# Install $Yarn dependencies
+	docker-compose exec -u www-data php yarn install
+
+	# Compile application assets
+	docker-compose exec -u www-data php yarn encore production
+
+composer-install: up
+	# Install PHP dependencies
+	docker-compose exec -u www-data php composer install
+
+# Build front assets in dev mode (no minifying...)
+encore-dev: up
+	docker-compose exec -u www-data php yarn encore dev
+
+# Build front assets in prod mode (minifying...)
+encore-prod: up
+	docker-compose exec -u www-data php yarn encore production
+
+# Start Encore in watch mode, re-compiling on each change
+encore-watch: up
+	docker-compose exec -u www-data php yarn encore dev --watch
+
+dsu-dump: up
+	docker-compose exec -u www-data php php bin/console doctrine:schema:update --dump-sql
+
+dsu-force: up
+	docker-compose exec -u www-data php php bin/console doctrine:schema:update --force
+
+# Migrate database with differences
+migrate: up
+	docker-compose exec -u www-data php php bin/console doctrine:migrations:migrate
+
+make-migration: up
+	docker-compose exec -u www-data php php bin/console make:migration
+
+assets-install: up
+	docker-compose exec -u www-data php php bin/console assets:install --symlink
+
+cache-clear: up
+	docker-compose exec -u www-data php php bin/console cac:c
+
+fixtures-load: up
+	docker-compose exec -u www-data php php bin/console doctrine:fixtures:load
+
+# Up containers
+up:
+	docker network create api-network || true
+	docker-compose up -d
+	docker-compose exec php usermod -u ${HOST_UID} www-data
+	docker-compose exec apache usermod -u ${HOST_UID} www-data
+
+# Up containers, with build forced
+build:
+	docker network create api-network || true
+	docker-compose up -d --build
+	docker-compose exec php usermod -u ${HOST_UID} www-data
+	docker-compose exec apache usermod -u ${HOST_UID} www-data
+
+# Down containers
+down:
+	docker-compose down

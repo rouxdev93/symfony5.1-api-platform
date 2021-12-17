@@ -13,12 +13,13 @@ use Symfony\Component\HttpFoundation\Request;
 
 class UserRegisterService
 {
-    private UserRepository $userRepository;
+    private UserManager $userManager;
     private EncoderService $encoderService;
+    private RequestService $requestService;
 
-    public function __construct(UserRepository $userRepository, EncoderService $encoderService)
+    public function __construct(UserManager $userManager, EncoderService $encoderService)
     {
-        $this->userRepository = $userRepository;
+        $this->userManager = $userManager;
         $this->encoderService = $encoderService;
     }
 
@@ -29,10 +30,10 @@ class UserRegisterService
         $password = RequestService::getField($request, 'password');
 
         $user = new User($name, $email);
-        $user->setPassword($this->encoderService->generateEncodedPassword($user, $password));
 
+        $user->setPassword($this->encoderService->generateEncodedPassword($user, $password));
         try {
-            $this->userRepository->save($user);
+            $this->userManager->saveEntity($user);
         } catch (\Exception $exception) {
             throw UserAlreadyExistException::fromEmail($email);
         }

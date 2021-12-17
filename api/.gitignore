@@ -22,3 +22,17 @@
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
+
+###> IDE-s ###
+# PhpStorm
+.idea
+# MAC OS
+.DS_store
+# VSCode
+.vscode
+###< IDE-s ###
+
+/.composer
+/.composer_cache
+/data
+/docker/logs
