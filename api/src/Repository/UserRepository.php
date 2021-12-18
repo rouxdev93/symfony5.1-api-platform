@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\User;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * Class UserRepository
  * @package App\Repository
  */
-class UserRepository extends ServiceEntityRepository
+class UserRepository extends BaseRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    protected static function entityClass(): string
     {
-        parent::__construct($registry, User::class);
+        return User::class ;
     }
 }

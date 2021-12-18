@@ -6,20 +6,21 @@ namespace App\Service\User;
 
 use App\Entity\User;
 use App\Exception\User\UserAlreadyExistException;
+use App\Repository\UserRepository;
 use App\Service\Password\EncoderService;
 use App\Service\Request\RequestService;
 use Symfony\Component\HttpFoundation\Request;
 
 class UserRegisterService
 {
-    private UserManager $userManager;
     private EncoderService $encoderService;
+    private UserRepository $userRepository;
 
     public function __construct(
-        UserManager $userManager,
-        EncoderService $encoderService
+        EncoderService $encoderService,
+        UserRepository $userRepository
     ){
-        $this->userManager = $userManager;
+        $this->userRepository = $userRepository;
         $this->encoderService = $encoderService;
     }
 
@@ -29,14 +30,14 @@ class UserRegisterService
         $email = RequestService::getField($request, 'email');
         $password = RequestService::getField($request, 'password');
 
-        if($user = $this->userManager->findOneByEmailOrFail($email)){
+        /*if($this->userManager->findOneByEmailOrFail($email)){
             throw UserAlreadyExistException::fromEmail($email);
-        }
+        }*/
 
         $user = new User($name, $email);
         $user->setPassword($this->encoderService->generateEncodedPassword($user, $password));
 
-        $this->userManager->saveEntity($user);
+        $this->userRepository->saveEntity($user);
 
         return $user;
     }

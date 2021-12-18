@@ -1,71 +1,74 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Repository;
 
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
-use Doctrine\Persistence\Mapping\MappingException;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Persistence\ObjectRepository;
 
-abstract class CustomEntityManager
+abstract class BaseRepository extends ServiceEntityRepository
 {
-    protected EntityManagerInterface $entityManager;
+    protected ObjectRepository $objectRepository;
     protected Connection $connection;
-    protected ObjectRepository $repository;
 
     public function __construct(
-        EntityManagerInterface $entityManager,
+        ManagerRegistry $registry,
         Connection $connection
     ){
-        $this->entityManager = $entityManager;
+        parent::__construct($registry, $this->entityClass());
         $this->connection = $connection;
-        $this->repository = $entityManager->getRepository($this->entityClass());
     }
 
+    /**
+     * @return string
+     */
     abstract protected static function entityClass(): string;
 
     /**
-     * @throws ORMException
+     * @param object $entity
      */
-    public function persistEntity(object $entity): void
+    public function persistEntity(object $entity)
     {
-        $this->entityManager->persist($entity);
+        $this->_em->persist($entity);
     }
 
-    /**
-     * @throws ORMException
-     * @throws OptimisticLockException
-     * @throws MappingException
-     */
-    public function flushData(): void
-    {
-        $this->entityManager->flush();
-        $this->entityManager->clear();
-    }
 
     /**
-     * @throws ORMException
-     * @throws OptimisticLockException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function flushData()
+    {
+        $this->_em->flush();
+        $this->_em->clear();
+    }
+
+
+    /**
+     * @param object $entity
+     * @return object
      */
     public function saveEntity(object $entity)
     {
-        $this->entityManager->persist($entity);
-        $this->entityManager->flush();
+        $this->_em->persist($entity);
+        $this->_em->flush();
 
         return $entity;
     }
 
     /**
-     * @throws ORMException
-     * @throws OptimisticLockException
+     * @param object $entity
+     * @return object
      */
     public function removeEntity(object $entity)
     {
-        $this->entityManager->remove($entity);
-        $this->entityManager->flush();
+        $this->_em->remove($entity);
+        $this->_em->flush();
+
+        return $entity;
     }
 
     /**

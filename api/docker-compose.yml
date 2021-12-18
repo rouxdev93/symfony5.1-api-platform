@@ -58,11 +58,21 @@ services:
 #      XDEBUG_CONFIG: remote_host=172.22.0.1
     volumes:
       - ${LOGS_DIR}/apache/:/var/log/apache2/
-      # TODO use named volume syntax
       - ${RELATIVE_APP_PATH}:/var/www/html
     links:
       - mysql
       - php
+    networks:
+      - api-network
+
+  mailhog:
+    container_name: mailhog
+    image: mailhog/mailhog
+    logging:
+      driver: 'none'  # disable saving logs
+    ports:
+      - 1025:1025 # smtp server
+      - 8025:8025 # web ui
     networks:
       - api-network
 
