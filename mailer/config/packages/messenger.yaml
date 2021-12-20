@@ -1,5 +1,11 @@
 framework:
     messenger:
+        serializer:
+            default_serializer: messenger.transport.symfony_serializer
+            symfony_serializer:
+                format: json
+                context: { }
+        failure_transport: failed
         # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
         # failure_transport: failed
 
@@ -8,7 +14,25 @@ framework:
             # async: '%env(MESSENGER_TRANSPORT_DSN)%'
             # failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
+            amqp_user:
+                dsn: '%env(string:MESSENGER_TRANSPORT_DSN)%'
+                serializer: 'Mailer\Serializer\Messenger\EventSerializer'
+                retry_strategy:
+                    max_retries: 1 #number of tries
+                    delay: 1000  #delay between launches (ms)
+                    multiplier: 1 #multiplier of delay
+                options:
+                    vhost: '%env(string:MESSENGER_VHOST)%'
+                    exhange:
+                        name: '%env(string:MESSENGER_EXCHANGE)%'
+                        type: direct
+                    queues:
+                        user_queue:
+                            binding_keys: [user_queue]
+                    auto_setup: true
+            failed:
+                dsn: 'doctrine://default?queue_name=failed'
 
         routing:
             # Route your messages to the transports
-            # 'App\Message\YourMessage': async
+            'Mailer\Messenger\Message\UserRegisteredMessage': amqp_user
