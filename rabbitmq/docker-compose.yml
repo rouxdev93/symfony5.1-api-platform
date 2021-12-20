@@ -6,15 +6,16 @@ services:
     build:
       context: ./docker
       args:
-        UID: $U_ID
+        UID: ${HOST_UID}
+        TIMEZONE: ${TIMEZONE}
     volumes:
       - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     ports:
       - 5672:5672 # puertoLocal:puertoContenedor // puerto de la cola de mensajería
       - 15672:15672 # puertoLocal:puertoContenedor // puerto de la interfaz gráfica
     networks:
-      - symfony-api-platform-network
+      - api-network
 
 networks:
-  symfony-api-platform-network:
+  api-network:
     external: true

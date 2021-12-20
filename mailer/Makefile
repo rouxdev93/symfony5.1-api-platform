@@ -4,15 +4,15 @@ export $(shell sed 's/=.*//' .env_docker)
 
 # Provides a bash in PHP container (user www-data)
 bash-php: up
-	docker-compose exec -u www-data api-php bash
+	docker-compose exec -u www-data mailer-php bash
 
 # Provides a bash in PHP container (user root)
 bash-php-root: up
-	docker-compose exec api-php bash
+	docker-compose exec mailer-php bash
 
 install-symfony: build
 	# Create skeleton using last version available
-	docker-compose exec -u www-data php composer create-project symfony/website-skeleton ${RELATIVE_APP_PATH}/tmp
+	docker-compose exec -u www-data mailer-php composer create-project symfony/website-skeleton ${RELATIVE_APP_PATH}/tmp
 
 	# append SF .env file to stack .env
 	cat "${RELATIVE_APP_PATH}/tmp/.env_docker" >> .env
@@ -44,66 +44,62 @@ install-symfony: build
 install-app: build composer-install migrate
 
 	# Configure Yarn storage
-	docker-compose exec -u www-data php yarn config set global-folder ${YARN_GLOBAL_FOLDER}
-	docker-compose exec -u www-data php yarn config set cache-folder ${YARN_CACHE_FOLDER}
+	docker-compose exec -u www-data mailer-php yarn config set global-folder ${YARN_GLOBAL_FOLDER}
+	docker-compose exec -u www-data mailer-php yarn config set cache-folder ${YARN_CACHE_FOLDER}
 
 	# Install $Yarn dependencies
-	docker-compose exec -u www-data php yarn install
+	docker-compose exec -u www-data mailer-php yarn install
 
 	# Compile application assets
-	docker-compose exec -u www-data php yarn encore production
+	docker-compose exec -u www-data mailer-php yarn encore production
 
 composer-install: up
 	# Install PHP dependencies
-	docker-compose exec -u www-data php composer install
+	docker-compose exec -u www-data mailer-php composer install
 
 # Build front assets in dev mode (no minifying...)
 encore-dev: up
-	docker-compose exec -u www-data php yarn encore dev
+	docker-compose exec -u www-data mailer-php yarn encore dev
 
 # Build front assets in prod mode (minifying...)
 encore-prod: up
-	docker-compose exec -u www-data php yarn encore production
+	docker-compose exec -u www-data mailer-php yarn encore production
 
 # Start Encore in watch mode, re-compiling on each change
 encore-watch: up
-	docker-compose exec -u www-data php yarn encore dev --watch
+	docker-compose exec -u www-data mailer-php yarn encore dev --watch
 
 dsu-dump: up
-	docker-compose exec -u www-data api-php php bin/console doctrine:schema:update --dump-sql
+	docker-compose exec -u www-data mailer-php php bin/console doctrine:schema:update --dump-sql
 
 dsu-force: up
-	docker-compose exec -u www-data api-php php bin/console doctrine:schema:update --force
+	docker-compose exec -u www-data mailer-php php bin/console doctrine:schema:update --force
 
 # Migrate database with differences
 migrate: up
-	docker-compose exec -u www-data api-php php bin/console doctrine:migrations:migrate
+	docker-compose exec -u www-data mailer-php php bin/console doctrine:migrations:migrate
 
 make-migration: up
-	docker-compose exec -u www-data api-php php bin/console make:migration
+	docker-compose exec -u www-data mailer-php php bin/console make:migration
 
 assets-install: up
-	docker-compose exec -u www-data api-php php bin/console assets:install --symlink
+	docker-compose exec -u www-data mailer-php php bin/console assets:install --symlink
 
 cache-clear: up
-	docker-compose exec -u www-data api-php php bin/console cac:c
+	docker-compose exec -u www-data mailer-php php bin/console cac:c
 
 fixtures-load: up
-	docker-compose exec -u www-data api-php php bin/console doctrine:fixtures:load
+	docker-compose exec -u www-data mailer-php php bin/console doctrine:fixtures:load
 
 # Up containers
 up:
-	docker network create api-network || true
 	docker-compose up -d
-	docker-compose exec api-php usermod -u ${HOST_UID} www-data
-	docker-compose exec api-apache usermod -u ${HOST_UID} www-data
+	docker-compose exec mailer-php usermod -u ${HOST_UID} www-data
 
 # Up containers, with build forced
 build:
-	docker network create api-network || true
 	docker-compose up -d --build
-	docker-compose exec api-php usermod -u ${HOST_UID} www-data
-	docker-compose exec api-apache usermod -u ${HOST_UID} www-data
+	docker-compose exec mailer-php usermod -u ${HOST_UID} www-data
 
 # Down containers
 down:

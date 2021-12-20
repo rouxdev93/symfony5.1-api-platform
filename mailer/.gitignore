@@ -1,0 +1,25 @@
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###< Docker configurations ###
+/.composer
+/.composer_cache
+/data
+/docker/logs
+###< Docker configurations ###
+
+###> IDE-s ###
+# PhpStorm
+.idea
+# MAC OS
+.DS_store
+# VSCode
+.vscode
+###< IDE-s ###

@@ -1,0 +1,36 @@
+version: '3.5'
+services:
+  mailer-mysql:
+    container_name: api-mailer-mysql-db
+    env_file: .env_docker
+    image: mysql:5.7
+    ports:
+      - ${MYSQL_HOST_PORT}:${MYSQL_PORT}
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ${MYSQL_HOST_VOLUME_PATH}:/var/lib/mysql
+    networks:
+      - api-network
+
+  mailer-php:
+    container_name: mailer-php-fpm-74
+    env_file: .env_docker
+    build:
+      context: docker/images/php-fpm7.4
+      args:
+        UID: ${HOST_UID}
+        TIMEZONE: ${TIMEZONE}
+    volumes:
+      - ${RELATIVE_APP_PATH}:/var/www/html
+    links:
+      - mailer-mysql
+    networks:
+      - api-network
+
+networks:
+  api-network:
+    external: true
