@@ -31,6 +31,18 @@ services:
     networks:
       - api-network
 
+  mailer-mailcacher:
+    container_name: api-mailer-mailcacher
+    env_file: .env_docker
+    image: schickling/mailcatcher
+    ports:
+      - ${MAILCATCHER_PORT}:${MAILCATCHER_PORT}
+      - ${MAILCATCHER_SMTP_PORT}:${MAILCATCHER_SMTP_PORT}
+    depends_on:
+      - mailer-mysql
+    networks:
+      - api-network
+
 networks:
   api-network:
     external: true
