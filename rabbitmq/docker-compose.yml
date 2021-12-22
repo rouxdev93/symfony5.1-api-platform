@@ -7,7 +7,6 @@ services:
       context: ./docker
       args:
         UID: ${HOST_UID}
-        TIMEZONE: ${TIMEZONE}
     volumes:
       - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     ports:

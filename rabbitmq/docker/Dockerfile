@@ -1,7 +1,6 @@
 FROM rabbitmq:3-management
 
 ARG UID
-ARG TIMEZONE
 
 RUN apt-get update \
     && apt-get install -y vim
