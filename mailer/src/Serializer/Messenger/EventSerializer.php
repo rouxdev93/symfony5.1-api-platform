@@ -22,6 +22,8 @@ class EventSerializer extends Serializer
     private function translateType(string $type) : string
     {
         $map = [
+            #origen => equivalencia en el propio dominio
+            #Conversión de mensagje de este tipo => al tipo de mensaje local
             'App\Messenger\Message\UserRegisteredMessage' => UserRegisteredMessage::class
         ];
 

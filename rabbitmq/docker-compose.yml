@@ -10,8 +10,14 @@ services:
     volumes:
       - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     ports:
+      # HTTP DASHBOARD FOR MANAGEMENT
       - 5672:5672 # puertoLocal:puertoContenedor // puerto de la cola de mensajería
+      # AMQP PROTOCOL
       - 15672:15672 # puertoLocal:puertoContenedor // puerto de la interfaz gráfica
+      # MQTT PROTOCOL
+      #- "1883:1883"
+      # MQTT OVER WEBSOCKETS
+      #- "15675:15675"
     networks:
       - api-network
 

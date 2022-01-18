@@ -9,5 +9,4 @@ class ClientRoute
 {
     public const ACTIVATE_ACCOUNT = '/activate_account';
 
-
 }

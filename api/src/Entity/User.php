@@ -248,7 +248,7 @@ class User implements UserInterface
     /**
      * Get the value of active
      */ 
-    public function getActive()
+    public function isActive()
     {
         return $this->active;
     }

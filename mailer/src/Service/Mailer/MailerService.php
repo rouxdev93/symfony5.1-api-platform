@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace Mailer\Service\Mailer;
 
-use Mailer\Service\Templating\TwigTemplate;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
+use Mailer\Service\Templating\TwigTemplate;
+use Psr\Log\LoggerInterface;
 
 class MailerService
 {

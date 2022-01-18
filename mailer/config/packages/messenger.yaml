@@ -12,11 +12,11 @@ framework:
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
             # async: '%env(MESSENGER_TRANSPORT_DSN)%'
-            # failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
             amqp_user:
                 dsn: '%env(string:MESSENGER_TRANSPORT_DSN)%'
                 serializer: 'Mailer\Serializer\Messenger\EventSerializer'
+                #estrategia de reintentos
                 retry_strategy:
                     max_retries: 1 #number of tries
                     delay: 1000  #delay between launches (ms)
@@ -31,7 +31,7 @@ framework:
                             binding_keys: [user_queue]
                     auto_setup: true
             failed:
-                dsn: 'doctrine://default?queue_name=failed'
+                dsn: 'doctrine://default?queue_name=failed' #almacenamos en una trabla los mensajes de envío fallido y esa cola es "failed"
 
         routing:
             # Route your messages to the transports

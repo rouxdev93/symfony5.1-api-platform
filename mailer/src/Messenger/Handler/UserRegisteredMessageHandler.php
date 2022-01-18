@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Mailer\Service\Handler;
+namespace Mailer\Messenger\Handler;
 
 use Mailer\Messenger\Message\UserRegisteredMessage;
 use Mailer\Service\Mailer\ClientRoute;
